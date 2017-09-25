@@ -1,3 +1,6 @@
+[![GoDoc](https://godoc.org/github.com/xdg/rebytes?status.svg)](https://godoc.org/github.com/xdg/rebytes)
+[![Build Status](https://travis-ci.org/xdg/rebytes.svg?branch=master)](https://travis-ci.org/xdg/rebytes)
+
 # Rebytes – Recycled byte slice pool and buffer for Golang
 
 ## Synopsis
@@ -10,7 +13,7 @@
 
     // Like bytes.Buffer, but with dynamic memory managed by the pool
     buf, err := rebytes.NewBuffer(pool)
-    buf.WriteString("hello World")
+    buf.WriteString("Hello World")
 ```
 
 ## Status
@@ -20,9 +23,13 @@ use.
 
 ## Description
 
-This repo provides packages that let you recycle byte slices in a
-persistent pool and to create a `bytes.Buffer` equivalent that dynamically
-manages memory backed by a byte slice pool.
+Package rebytes provides types that recycle bytes slices to reduce
+allocation and garbage collection:
+
+* `rebytes.Pool`: a `[]byte` pool that provides/recycles fixed capacity
+  slices from a fixed-maximum-size pool.
+* `rebytes.Buffer`: a `bytes.Buffer` analogue that dynamically gets/returns
+  memory from a `rebytes.Pool`.
 
 ## Copyright and License
 
