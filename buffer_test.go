@@ -89,7 +89,7 @@ func TestBufferRead(t *testing.T) {
 	is.Equal(n, 3)
 	is.Nil(err)
 	is.Equal(string(got), "lo ")
-	is.Equal(buf.Chunks(), 2)
+	is.Equal(buf.Chunks(), 3)
 
 	got = make([]byte, 20)
 	n, err = buf.Read(got)
@@ -98,7 +98,7 @@ func TestBufferRead(t *testing.T) {
 	is.NotNil(err)
 	is.True(err == io.EOF)
 	is.Equal(string(got), "world")
-	is.Equal(buf.Chunks(), 1)
+	is.Equal(buf.Chunks(), 3)
 }
 
 func TestBufferError(t *testing.T) {

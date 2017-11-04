@@ -18,9 +18,10 @@ import (
 // interfaces.  Memory is managed by a rebytes.Pool: new memory is allocated
 // from the pool as needed for writign and returned to the pool after reading.
 type Buffer struct {
-	pool   *Pool
-	offset int // where to read from in first chunk
-	chunks [][]byte
+	pool     *Pool
+	offset   int // where to read from
+	chunks   [][]byte
+	chunkCap int // capacity of a chunk
 }
 
 // ErrTooLarge is passed to panic if memory cannot be allocated to store data
@@ -36,24 +37,16 @@ func NewBuffer(pool *Pool) (*Buffer, error) {
 	b := &Buffer{pool: pool}
 	b.chunks = make([][]byte, 1)
 	b.chunks[0] = pool.Get()
+	b.chunkCap = cap(b.chunks[0])
 	return b, nil
 }
 
-// findReadableChunk returns a pointer to a readable chunk,
-// removing any exhausted ones at the start of the chunklist.
-func (b *Buffer) findReadableChunk() (r *[]byte) {
-	r = &b.chunks[0]
-
-	// if offset is at end of first chunk and there are more chunks,
-	// then we recycle the first chunk and use the next
-	if b.offset == cap(*r) && len(b.chunks) > 1 {
-		b.pool.Put(*r)
-		b.offset = 0
-		b.chunks = b.chunks[1:]
-		return &b.chunks[0]
-	}
-
-	return r
+// findReadLocation returns a pointer to the chunk corresponding to
+// the current offset and a chunk-relative offset to read from
+func (b *Buffer) findReadLocation() (s *[]byte, i int) {
+	s = &b.chunks[b.offset/b.chunkCap]
+	i = b.offset % b.chunkCap
+	return
 }
 
 // findWritableChunk returns a pointer to a writeable chunk, adding one if
@@ -98,14 +91,14 @@ func (b *Buffer) Read(p []byte) (n int, err error) {
 	}
 
 	for n < len(p) {
-		s := b.findReadableChunk()
+		s, i := b.findReadLocation()
 
-		if b.offset == len(*s) {
+		if i == len(*s) {
 			return n, io.EOF
 		}
 
 		// copy and then update offset and progress counter
-		x := copy(p[n:], (*s)[b.offset:])
+		x := copy(p[n:], (*s)[i:])
 		b.offset += x
 		n += x
 	}
