@@ -110,3 +110,28 @@ func TestBufferError(t *testing.T) {
 	is.NotNil(err)
 	is.Equal(err.Error(), "can't pass nil to rebytes.NewBuffer()")
 }
+
+func TestBufferFree(t *testing.T) {
+	is := testy.New(t)
+	defer func() { t.Logf(is.Done()) }()
+
+	pool := rebytes.NewPool(5, 100)
+	buf, _ := rebytes.NewBuffer(pool)
+
+	// load buffer
+	_, err := buf.WriteString("hello world")
+	is.Equal(buf.Chunks(), 3)
+
+	// free buffer
+	buf.Free()
+	is.Equal(buf.Chunks(), 0)
+
+	// read after free is error
+	got := make([]byte, 3)
+	_, err = buf.Read(got)
+	is.Equal(err.Error(), "can't read from buffer after Free()")
+
+	// write after free is error
+	_, err = buf.WriteString("hello world")
+	is.Equal(err.Error(), "can't write to buffer after Free()")
+}

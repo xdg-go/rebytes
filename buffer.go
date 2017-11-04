@@ -74,6 +74,15 @@ func (b *Buffer) Chunks() int {
 	return len(b.chunks)
 }
 
+// Free recycles byte slices back into the associated pool.  The
+// buffer is unusable afterwards.
+func (b *Buffer) Free() {
+	for _, s := range b.chunks {
+		b.pool.Put(s)
+	}
+	b.chunks = b.chunks[0:0]
+}
+
 // String joins unread []byte chunks into single string
 func (b *Buffer) String() string {
 	return string(bytes.Join(b.chunks, []byte("")))
@@ -84,6 +93,9 @@ func (b *Buffer) String() string {
 // buffer has no data to return, err is io.EOF (unless len(p) is zero);
 // otherwise it is nil
 func (b *Buffer) Read(p []byte) (n int, err error) {
+	if len(b.chunks) == 0 {
+		return 0, errors.New("can't read from buffer after Free()")
+	}
 
 	for n < len(p) {
 		s := b.findReadableChunk()
@@ -105,6 +117,9 @@ func (b *Buffer) Read(p []byte) (n int, err error) {
 // needed. The return value n is the length of p; err is always nil. If the
 // buffer becomes too large, Write will panic with ErrTooLarge.
 func (b *Buffer) Write(p []byte) (n int, err error) {
+	if len(b.chunks) == 0 {
+		return 0, errors.New("can't write to buffer after Free()")
+	}
 
 	for len(p) > 0 {
 		w := b.findWritableChunk()
