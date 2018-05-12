@@ -8,7 +8,7 @@
 ```
     // Byte slice pool with 1k slice capacity, 100 pool capacity
     pool := rebytes.NewPool(1024, 100)
-    byteSlice := pool.Got()
+    byteSlice := pool.Get()
     pool.Put(byteSlice)
 
     // Like bytes.Buffer, but with dynamic memory managed by the pool
